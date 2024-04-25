@@ -72,7 +72,7 @@ tabs = st.tabs(['Add Data', 'View Data', 'Frequencies', 'Generate Text'])
 
 with tabs[0]:
     st.subheader('Add a New Sentence')
-    user_input = st.text_input('Your sentence', placeholder='A child saw the dog.')
+    user_input = st.text_input('Your sentence', placeholder='Make sentence using the below words')
     if st.button('Submit'):
         add_training_data(user_input)
     st.text_area('Allowed Words:', ', '.join(sorted(ALLOWED_WORDS)), height=150)
