@@ -71,17 +71,21 @@ st.title('Small Language Model')
 tabs = st.tabs(['Add Data', 'View Data', 'Frequencies', 'Generate Text'])
 
 with tabs[0]:
-    user_input = st.text_input('Your sentence', placeholder='A child saw the dog.', on_change=validate_sentence)
+    st.subheader('Add a New Sentence')
+    user_input = st.text_input('Your sentence', placeholder='A child saw the dog.')
     if st.button('Submit'):
         add_training_data(user_input)
+    st.text_area('Allowed Words:', ', '.join(sorted(ALLOWED_WORDS)), height=150)
 
 with tabs[1]:
+    st.subheader('View Existing Data')
     st.text('\n'.join(sentences))
     if st.button('Export Training Data'):
         pd.DataFrame(sentences, columns=['Sentences']).to_csv('training_data.csv')
         st.success('Training data exported to CSV.')
 
 with tabs[2]:
+    st.subheader('Word Frequencies')
     if not sentences:
         st.warning('Add training data first.')
     else:
@@ -91,6 +95,7 @@ with tabs[2]:
         plot_frequencies(df.set_index(['Previous', 'Next']))
 
 with tabs[3]:
+    st.subheader('Generate Text')
     if not sentences:
         st.warning('Add training data first.')
     else:
