@@ -14,7 +14,6 @@ a the man child wife husband car movie saw played ran sat with after from on
 ball house park tree book message game rain jump eat drink sleep swim fly sing dance
 chair table apple banana orange juice milk water bread cheese sky grass flower sun
 moon star cloud snow rain light dark small big happy sad angry'''.split())
-
 START_TOKEN = ' '
 END_TOKEN = '.'
 
@@ -54,40 +53,52 @@ def plot_frequencies(df):
     df.plot(kind='bar', ax=ax)
     st.pyplot(fig)
 
+def generate_sentence(df):
+    n = len(df.columns) - 1
+    sentence = [START_TOKEN] * n
+    while sentence[-1] != END_TOKEN and len(sentence) < MAX_GEN_LEN:
+        possible_next_words = df[df.iloc[:, :-1].eq(sentence[-n:]).all(axis=1)]
+        if not possible_next_words.empty:
+            next_word = possible_next_words['Next'].sample(1).iloc[0]
+            sentence.append(next_word)
+        else:
+            break
+    return ' '.join(sentence[n:-1]).capitalize() + '.'
+
 # Streamlit UI
 st.title('Small Language Model')
 
-with st.tabs(['Add Data', 'View Data', 'Frequencies', 'Generate Text']) as (add_tab, view_tab, freq_tab, gen_tab):
-    with add_tab:
-        user_input = st.text_input('Your sentence', placeholder='A child saw the dog.', on_change=validate_sentence)
-        if st.button('Submit'):
-            add_training_data(user_input)
+tabs = st.tabs(['Add Data', 'View Data', 'Frequencies', 'Generate Text'])
 
-    with view_tab:
-        st.text('\n'.join(sentences))
-        if st.button('Export Training Data'):
-            pd.DataFrame(sentences, columns=['Sentences']).to_csv('training_data.csv')
-            st.success('Training data exported to CSV.')
+with tabs[0]:
+    user_input = st.text_input('Your sentence', placeholder='A child saw the dog.', on_change=validate_sentence)
+    if st.button('Submit'):
+        add_training_data(user_input)
 
-    with freq_tab:
-        if not sentences:
-            st.warning('Add training data first.')
-        else:
-            n = st.slider('Words used for prediction', 1, MAX_TUPLE_LEN, 1)
-            df = get_tuples(n).value_counts().rename_axis(['Next', 'Previous']).reset_index(name='Frequency')
-            st.dataframe(df)
-            plot_frequencies(df.set_index(['Previous', 'Next']))
+with tabs[1]:
+    st.text('\n'.join(sentences))
+    if st.button('Export Training Data'):
+        pd.DataFrame(sentences, columns=['Sentences']).to_csv('training_data.csv')
+        st.success('Training data exported to CSV.')
 
-    with gen_tab:
-        if not sentences:
-            st.warning('Add training data first.')
-        else:
-            n = st.slider('Words used for prediction', 1, MAX_TUPLE_LEN, 1)
-            df = get_tuples(n)
-            if st.button('Generate Sentences'):
-                sentences_generated = [generate_sentence(df) for _ in range(5)]
-                st.text('\n'.join(sentences_generated))
-                if st.button('Save Generated Sentences'):
-                    pd.DataFrame(sentences_generated, columns=['Sentences']).to_csv('generated_sentences.csv')
-                    st.success('Generated sentences exported to CSV.')
+with tabs[2]:
+    if not sentences:
+        st.warning('Add training data first.')
+    else:
+        n = st.slider('Words used for prediction', 1, MAX_TUPLE_LEN, 1)
+        df = get_tuples(n).value_counts().rename_axis(['Next', 'Previous']).reset_index(name='Frequency')
+        st.dataframe(df)
+        plot_frequencies(df.set_index(['Previous', 'Next']))
 
+with tabs[3]:
+    if not sentences:
+        st.warning('Add training data first.')
+    else:
+        n = st.slider('Words used for prediction', 1, MAX_TUPLE_LEN, 1)
+        df = get_tuples(n)
+        if st.button('Generate Sentences'):
+            sentences_generated = [generate_sentence(df) for _ in range(5)]
+            st.text('\n'.join(sentences_generated))
+            if st.button('Save Generated Sentences'):
+                pd.DataFrame(sentences_generated, columns=['Sentences']).to_csv('generated_sentences.csv')
+                st.success('Generated sentences exported to CSV.')
